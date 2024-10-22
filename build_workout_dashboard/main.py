@@ -8,6 +8,16 @@ dbConfig = config['tool']['project']['database']
 input_filepath = config['tool']['poetry']['name'].replace('-', '_') + os.path.sep + config['tool']['project']['input_filename']
 
 ## 0 - DISPLAY DATABASES VISIBLE TO THIS USER:
+print("Connecting to MySQL database...")
+if config['tool']['project']['isDev']:
+    print("Using development database configuration.")
+else:
+    print("Using production database configuration.")
+    dbConfig['host'] = os.getenv('RDS_ENDPOINT')
+    dbConfig['user'] = os.getenv('RDS_USER')
+    dbConfig['userpwd'] = os.getenv('RDS_PASSWORD')
+    
+print(dbConfig)
 connection = mysql.connector.connect(**dbConfig)
 cursor = connection.cursor()
 

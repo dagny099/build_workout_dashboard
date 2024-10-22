@@ -1,0 +1,35 @@
+[tool.poetry]
+name = "build-workout-dashboard"
+version = "0.1.0"
+description = "Barb's project to create a workflow for an exercise dashboard based on my personal data for SQL practice, dashboarding, and more."
+authors = ["BarbHS <barbs@balex.com>"]
+package-mode = true
+readme = "README.md"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+toml = "^0.10.2"
+mysql-connector-python = "^9.1.0"
+pandas = "^2.2.3"
+numpy = "^2.1.2"
+
+[tool.project]
+debug = true
+log_level = "info"
+max_retries = 3
+input_filename = "user2632022_workout_history.csv"
+
+[tool.project.database]
+host = "localhost"
+port = 8889
+username = "barbs"
+password = "barbs"
+
+[tool.project.api]
+base_url = "https://api.example.com"
+api_key = "your_api_key_here"
+timeout = 30

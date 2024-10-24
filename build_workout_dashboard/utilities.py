@@ -1,38 +1,47 @@
-import toml
 import pandas as pd
 import numpy as np
 from datetime import datetime
 import mysql.connector
 from mysql.connector import Error
 import re
-import os
-
 
 # Function to create database and table
-def setup_database(cursor):
+def setup_database(cursor=None, db_config=None):
     """
-    Function to create database and table if they don't exist
+    Function to create table(s) if they don't exist
     """
-    # Create database if it doesn't exist
-    cursor.execute("CREATE DATABASE IF NOT EXISTS sweat")
-    cursor.execute("USE sweat")
+    if not isinstance(cursor, mysql.connector.cursor.MySQLCursor):
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
+        print("Using this database configuration:")
+        print(db_config)
+
+    # Use the database
+    if 'database' not in db_config:
+        raise ValueError("Database name not found in db_config")
+    else: 
+        cursor.execute(f"USE {db_config['database']}")
+        print(f"\nUsing database: {db_config['database']}")
     
-    # Create table if it doesn't exist
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS workout_summary (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        workout_date DATETIME,
-        activity_type VARCHAR(50),
-        kcal_burned BIGINT,
-        distance_mi FLOAT,
-        duration_sec FLOAT,
-        avg_pace FLOAT,
-        max_pace FLOAT,
-        steps BIGINT,
-        link VARCHAR(100),
-        workout_id VARCHAR(20)
-    )
-    """)
+        # Create table if it doesn't exist
+        cursor.execute(f"""
+        CREATE TABLE IF NOT EXISTS workout_summary (
+            workout_id VARCHAR(20) PRIMARY KEY,
+            workout_date DATETIME,
+            activity_type VARCHAR(50),
+            kcal_burned BIGINT,
+            distance_mi FLOAT,
+            duration_sec FLOAT,
+            avg_pace FLOAT,
+            max_pace FLOAT,
+            steps BIGINT,
+            link VARCHAR(100) 
+        )
+        """)
+        cursor.execute(f"SELECT COUNT(*) FROM workout_summary;")
+        print(f"{db_config['database']}.workout_summary table has {cursor.fetchone()[0]} rows.")    
+        return cursor
+    
 
 # Custom date parsing function
 def parse_date(date_string):

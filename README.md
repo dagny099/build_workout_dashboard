@@ -5,6 +5,8 @@ The Workout Dashboard is a web application designed to help users track and mana
 
 [Google Document with project notes](https://docs.google.com/document/d/1lj6R9rybGuRNgUUzizTrjVLj5xpU9R1nWajcMkRqpwI/edit?usp=drive_link)
 
+Link to download a user's own [MapMyRun workout history](https://www.mapmyfitness.com/workout/export/csv) (*requires sign-in*). 
+
 ## Features
 - User authentication and profile management
 - Exercise logging with customizable routines

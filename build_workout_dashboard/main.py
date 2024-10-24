@@ -17,7 +17,7 @@ input_filepath = config['tool']['poetry']['name'].replace('-', '_') + os.path.se
 if not(config['tool']['project']['debug']):
     print("Using production database configuration.")
     dbConfig['host'] = os.getenv('RDS_ENDPOINT')
-    dbConfig['user'] = os.getenv('RDS_USER')
+    dbConfig['username'] = os.getenv('RDS_USER')
     dbConfig['password'] = os.getenv('RDS_PASSWORD')
 
 # Establish myssql connection (no database specified)

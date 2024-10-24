@@ -26,6 +26,7 @@ debug = true
 
 [tool.project.database]
 host = "localhost"
-port = 8889
+port = 3306
+#port = 8889 # For my desktop!
 username = "barbs"
 password = "barbs"

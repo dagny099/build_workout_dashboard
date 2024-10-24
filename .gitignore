@@ -13,6 +13,9 @@ __pycache__/
 *.db
 *.sqlite3
 
+# After development, I dont think Ill commit the pyproject.toml
+pyproject.toml
+
 # Unit test / coverage reports
 .coverage
 .tox/

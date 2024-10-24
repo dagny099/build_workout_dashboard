@@ -22,10 +22,10 @@ numpy = "^2.1.2"
 
 [tool.project]
 input_filename = "user2632022_workout_history.csv"
-isDev = true
+debug = true
 
 [tool.project.database]
 host = "localhost"
-port = 3306
+port = 8889
 username = "barbs"
 password = "barbs"

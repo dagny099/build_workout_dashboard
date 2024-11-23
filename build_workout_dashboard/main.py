@@ -1,4 +1,4 @@
-from build_workout_dashboard.utilities import *
+from utilities import *
 import toml
 import os
 
@@ -6,19 +6,16 @@ import os
 with open("pyproject.toml", "r") as f:
     config = toml.load("pyproject.toml")
 
-# Get database configuration
-dbConfig = config['tool']['project']['database']
-
-# Get input file path
+# Set csv data path 
 input_filepath = config['tool']['poetry']['name'].replace('-', '_') + os.path.sep + config['tool']['project']['input_filename']
 
-
-# IF PROD: use RDS on AWS instead of localhost
-if not(config['tool']['project']['debug']):
+# Set database configuration
+dbConfig = config['tool']['project']['database']
+dbConfig['username'] = os.getenv('RDS_USER')
+dbConfig['password'] = os.getenv('RDS_PASSWORD')
+if not(config['tool']['project']['debug']): # In production use RDS on AWS instead of localhost
     print("Using production database configuration.")
     dbConfig['host'] = os.getenv('RDS_ENDPOINT')
-    dbConfig['username'] = os.getenv('RDS_USER')
-    dbConfig['password'] = os.getenv('RDS_PASSWORD')
 
 # Establish myssql connection (no database specified)
 print("Connecting to MySQL database...")

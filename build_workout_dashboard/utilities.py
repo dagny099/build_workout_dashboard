@@ -1,47 +1,68 @@
 import pandas as pd
 import numpy as np
 from datetime import datetime
-import mysql.connector
-from mysql.connector import Error
+import streamlit as st
+import pymysql
 import re
+import toml
 
-# Function to create database and table
-def setup_database(cursor=None, db_config=None):
-    """
-    Function to create table(s) if they don't exist
-    """
-    if not isinstance(cursor, mysql.connector.cursor.MySQLCursor):
-        connection = mysql.connector.connect(**db_config)
-        cursor = connection.cursor()
-        print("Using this database configuration:")
-        print(db_config)
-
-    # Use the database
-    if 'database' not in db_config:
-        raise ValueError("Database name not found in db_config")
-    else: 
-        cursor.execute(f"USE {db_config['database']}")
-        print(f"\nUsing database: {db_config['database']}")
-    
-        # Create table if it doesn't exist
-        cursor.execute(f"""
-        CREATE TABLE IF NOT EXISTS workout_summary (
-            workout_id VARCHAR(20) PRIMARY KEY,
-            workout_date DATETIME,
-            activity_type VARCHAR(50),
-            kcal_burned BIGINT,
-            distance_mi FLOAT,
-            duration_sec FLOAT,
-            avg_pace FLOAT,
-            max_pace FLOAT,
-            steps BIGINT,
-            link VARCHAR(100) 
+# Function to setup connectivity
+def get_db_connection():
+    with open("../.streamlit/secrets.toml", "r") as f:
+        dbconfig = toml.load(f)
+        dbconfig = dbconfig['connections']['mysql']
+        # print(dbconfig)
+        dbname = dbconfig["database"]
+        connection = pymysql.connect(
+                host=dbconfig["host"],
+                port=dbconfig["port"],
+                db=dbconfig["database"],
+                user=dbconfig["username"],
+                password=dbconfig["password"],
+                # cursorclass=pymysql.cursors.DictCursor
         )
-        """)
-        cursor.execute(f"SELECT COUNT(*) FROM workout_summary;")
-        print(f"{db_config['database']}.workout_summary table has {cursor.fetchone()[0]} rows.")    
-        return cursor
+    return connection
+
+
+def insert_data(df):
+    """
+    Insert dataframe rows into cursor's database table
+    """
+
+    # Get column names
+    columns = ', '.join(df.columns)
+    placeholders = ', '.join(['%s'] * len(df.columns))
     
+    # Prepare the SQL query
+    sql = f"INSERT INTO workout_summary ({columns}) VALUES ({placeholders})"
+    
+    # Convert DataFrame to list of tuples
+    data = [tuple(x) for x in df.replace({np.nan: None}).values]
+    
+    connection = get_db_connection()
+    with connection.cursor() as cursor:
+        try:
+            cursor.executemany(sql, data)
+            connection.commit()
+            return cursor.rowcount
+        except Exception as e:
+            print(f"Error inserting data: {e}")
+            return 0
+
+
+# Function to enrich data ... More enrichment can be added here
+def enrich_data(df):
+    """
+    Enrich the data with additional columns
+    """
+    # Extract workout ID from Link
+    df['workout_id'] = df['link'].apply(extract_workout_id)
+    
+    # TODO -- More enrichment here, e.g.
+    # df['workout_year'] = pd.to_datetime(df['workout_date']).dt.year
+    # df['is_long_workout'] = df['duration_sec'] > 3600
+
+    return df
 
 # Custom date parsing function
 def parse_date(date_string):
@@ -143,50 +164,19 @@ def clean_data(df):
     return df
 
 
+def load_data(query="SELECT * FROM workout_summary"):
+    cursor = get_db_connection()
+    cursor.execute(query)
+    data = cursor.fetchall()  # Get all rows of the result
+    cursor.close()
+    column_names = [i[0] for i in cursor.description]  # Get column names
+    return pd.DataFrame(data, columns=column_names)  # Convert the data into a Pandas DataFrame
+
+
+
 def extract_workout_id(url):
     match = re.search(r'/workout/(\d+)', url)
     if match:
         return match.group(1)
     else:
         return 'unsure'  # or you could return a specific value to indicate no match was found
-
-
-def enrich_data(df):
-    """
-    Enrich the data with additional columns
-    """
-    # Extract workout ID from Link
-    df['workout_id'] = df['link'].apply(extract_workout_id)
-    
-    # TODO -- More enrichment here, e.g.
-    # df['workout_year'] = pd.to_datetime(df['workout_date']).dt.year
-    # df['is_long_workout'] = df['duration_sec'] > 3600
-
-    return df
-
-def insert_data_NEW(cursor, df):
-    """
-    Insert dataframe rows into cursor's database table
-    """
-
-    # Get column names
-    columns = ', '.join(df.columns)
-    placeholders = ', '.join(['%s'] * len(df.columns))
-    
-    # Prepare the SQL query
-    sql = f"INSERT INTO workout_summary ({columns}) VALUES ({placeholders})"
-    
-    # Convert DataFrame to list of tuples
-    data = [tuple(x) for x in df.replace({np.nan: None}).values]
-    
-    try:
-        cursor.executemany(sql, data)
-        return cursor.rowcount
-    except mysql.connector.Error as err:
-        print(f"Error: {err}")
-        print(f"Failed SQL: {sql}")
-        print("Failed data sample:")
-        for row in data[:5]:  # Print first 5 rows of data
-            print(row)
-        raise
-

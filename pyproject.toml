@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "build-workout-dashboard"
 version = "0.1.0"
-description = "Barb's project to create a workflow for an exercise dashboard based on my personal data for SQL practice, dashboarding, and more."
-authors = ["BarbHS <barbs@balex.com>"]
+description = "Project to build a Workout Dashboard with an end-to-end workflow encompassing data ingestion, cleaning, storing, transforming, and managing of that data. Goals: SQL practice, data visualization, insight generation, and more."
+authors = ["Barbara Hidalgo <barbs@balex.com>"]
 package-mode = true
 readme = "README.md"
 
@@ -16,17 +16,12 @@ build-backend = "poetry.core.masonry.api"
 [tool.poetry.dependencies]
 python = "^3.10"
 toml = "^0.10.2"
-mysql-connector-python = "^9.1.0"
+pymysql = "^1.1.0"
 pandas = "^2.2.3"
 numpy = "^2.1.2"
+streamlit = "^1.35.0"
+plotly = "^5.24.0"
 
 [tool.project]
 input_filename = "user2632022_workout_history.csv"
 debug = true
-
-[tool.project.database]
-host = "localhost"
-port = 3306
-#port = 8889 # For my desktop!
-username = "barbs"
-password = "barbs"

@@ -15,8 +15,8 @@ Usage:
     $ ~/.local/bin/poetry run python init.py
 
 
-Notes:
-    Ensure all dependencies are installed and necessary configurations are updated before running this script.
+Pre-requisites:
+    $ poetry install  # Within a virtual environment, install dependencies using poetry
 
 """
 

@@ -11,7 +11,7 @@ Pre-requisites:
     $ ~/.local/bin/poetry run python init.py     # Initialize the database
 """
 
-from build_workout_dashboard.utilities import insert_data, clean_data, enrich_data
+from utilities import insert_data, clean_data, enrich_data
 import os
 import toml
 import pandas as pd

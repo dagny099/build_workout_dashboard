@@ -8,10 +8,19 @@ __pycache__/
 *.env
 *.local
 *.log.*
+.st-db*
+build_workout_dashboard/*
+!build_workout_dashboard/*.py
+!build_workout_dashboard/*.json
+!build_workout_dashboard/*.csv
 
 # Ignore database files
 *.db
 *.sqlite3
+
+
+# Ignore files donwloaded and locally stored
+workouts_timedata*/
 
 # After development, I dont think Ill commit the pyproject.toml
 pyproject.toml

@@ -19,7 +19,7 @@ def get_db_connection():
                 db=dbconfig["database"],
                 user=dbconfig["username"],
                 password=dbconfig["password"],
-                # cursorclass=pymysql.cursors.DictCursor
+                cursorclass=pymysql.cursors.DictCursor
         )
     return connection
 

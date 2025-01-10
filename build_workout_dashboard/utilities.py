@@ -103,7 +103,7 @@ def clean_data(df):
     # Drop rows where 'Workout Time (seconds)' is 0
     df = df[df['Workout Time (seconds)'] != 0]
     rows_dropped = initial_row_count - len(df)   
-    print(f"Dropped {rows_dropped} rows with zero workout time.")
+    # print(f"Dropped {rows_dropped} rows with zero workout time.") ** ADD TO A REPORT **
 
     # Replace 'nan' with None for numeric columns
     numeric_columns = ['Calories Burned (kcal)', 'Distance (mi)', 'Workout Time (seconds)', 
@@ -135,8 +135,8 @@ def clean_data(df):
     df = df.dropna(subset=['Workout Date'])
     rows_dropped_invalid_date = len(invalid_dates)
     
-    print(f"Dropped {rows_dropped_invalid_date} rows with invalid dates.")
-    print(f"Final number of rows: {len(df)}")
+    # print(f"Dropped {rows_dropped_invalid_date} rows with invalid dates.")  ** ADD TO A REPORT **
+    # print(f"Final number of rows: {len(df)}") ** ADD TO A REPORT **
     
     # Replace NaN values with None
     df = df.where(pd.notnull(df), None)

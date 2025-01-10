@@ -24,10 +24,10 @@ with open("pyproject.toml", "r") as f:
 
 # Get the input file path: for `user2632022_workout_history.csv`
 input_filepath = 'build_workout_dashboard' + os.path.sep + config['tool']['project']['input_filename'] 
-print(input_filepath)
+# print(input_filepath)
 # Load the CSV file with full workout history
 if os.path.exists(input_filepath):
-    print(f'\n-------\nImporting this full workout CSV file: {input_filepath}')
+    print(f'\n-------\nChecking for workout data in this file: {input_filepath}')
     df = pd.read_csv(input_filepath)
 else:
     print(f"File {input_filepath} not found. Please check the path in pyproject.toml")
@@ -48,7 +48,7 @@ tablename = "workout_summary"
 with open(".streamlit/secrets.toml", "r") as f:
     dbconfig = toml.load(f)
     dbconfig = dbconfig['connections']['mysql']
-    print(f"\n-------\nUsing this Databse configuration:")    
+    print(f"\nUsing this Databse configuration:")    
     print(dbconfig)    
 
 # 2. Connect to the database
@@ -69,11 +69,11 @@ with connection.cursor() as cursor:
 
     # Exclude existing workout_ids from the new data
     newDf = df[~df['workout_id'].isin(existing_workout_ids)]  
-    print(f"\n-------\nExisting workouts in table: {len(existing_workout_ids)} | New workouts to import: {newDf.shape[0]}")
+    print(f"\nExisting workouts in table: {len(existing_workout_ids)} | New workouts to import: {newDf.shape[0]}")
 
     # INSERT NEW WORKOUTS IN TABLE
     rows_affected = insert_data(newDf)
-    print(f"Inserted {rows_affected} rows into {tablename}")
+    print(f"\nInserted {rows_affected} rows into {tablename}")
 
 # 11/22/24 NOT SURE WHY BUT THIS GIVES WRONG VALUE IF THE INSERT_DATA FUNCTION ACTUALLY INSERTED ROWS
 # with connection.cursor() as cursor:
@@ -85,7 +85,7 @@ with connection.cursor() as cursor:
 # 6. Close the connection
 cursor.close()
 connection.close()
-print("MySQL connection is closed")
+print("\nMySQL connection is closed")
 print("-------\n")        
         
 

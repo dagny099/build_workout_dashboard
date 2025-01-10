@@ -37,11 +37,14 @@ with open(".streamlit/secrets.toml", "r") as f:
 with open("pyproject.toml", "r") as f:
     proj_config = toml.load(f)
 
-if not(proj_config['tool']['project']['debug']):
-    print("Using production database configuration.")
+# if not(proj_config['tool']['project']['debug']):
+if False:
+    print("Using remote database configuration.")
     dbconfig['host'] = os.getenv('RDS_ENDPOINT')
     dbconfig['username'] = os.getenv('RDS_USER')
     dbconfig['password'] = os.getenv('RDS_PASSWORD')
+    dbconfig['port'] = 3306
+    dbconfig['database'] = 'sweat-'
 
 # 2. Connect to the database
 if 'connection' not in globals():

@@ -13,5 +13,10 @@
         "background": "#FFFFFF",
         "padding": "10px",
         "margin": "5px"
+    },
+    "metric_container": {
+        "background": "#FFFFFF",
+        "padding": "10px",
+        "margin": "5px"
     }
 }

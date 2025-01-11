@@ -31,26 +31,42 @@ with open(".streamlit/secrets.toml", "r") as f:
     dbconfig = dbconfig['connections']['mysql']
     #del dbconfig['dialect']
 
-# 2. Connect to the database
-connection_type = st.sidebar.selectbox("Select Connection Type", ["Local", "Remote"], index=0)
+# Main Streamlit app
+def main():
+    st.sidebar.title("Workout Dashboard")
+    st.sidebar.write("Welcome to the Workout Dashboard!")
+    st.sidebar.write("Here you can view your workout history and analyze trends.")
+    st.sidebar.write("Select a page from the sidebar to get started.")
 
-# ADD LOGIC HERE TO TOGGLE dbconfig options based on connection_type
-st.sidebar.write("Connecting to MySQL database...")
-st.sidebar.write(dbconfig)
+    # Add pages to the sidebar
+    pages = {
+        "Home": home,
+        "Workout History": workout_history,
+        "Trend Analysis": trend_analysis
+    }
+
+    # Get the selected page from the sidebar
+    selected_page = st.sidebar.radio("Select a page:", list(pages.keys()))
+
+    # Run the selected page
+    pages[selected_page]()
+# 2. Connect to the database
+if 'connection' not in globals():
+    st.sidebar.write("Connecting to MySQL database...")
+    st.sidebar.write(dbconfig)
+    print(f"\n-------\nUsing this Databse configuration:")    
+    print(dbconfig)    
 
 connection = get_db_connection(dbconfig=dbconfig)
 
 # 3. Load data from the database
-query = "SELECT * FROM workout_summary LIMIT 2"
-response = execute_query(query, dbconfig) 
-df =  pd.DataFrame(response)
-# df = load_data(c)
-# cursor = connection.cursor()
-# cursor.execute("SELECT * FROM workout_summary")
-# data = cursor.fetchall()  # Get all rows of the result
+# df = load_data("SELECT * FROM workout_summary")
+cursor = connection.cursor()
+cursor.execute("SELECT * FROM workout_summary")
+data = cursor.fetchall()  # Get all rows of the result
 # cursor.close()
-# column_names = [i[0] for i in cursor.description]  # Get column names
-# df = pd.DataFrame(data, columns=column_names)  # Convert the data into a Pandas DataFrame
+column_names = [i[0] for i in cursor.description]  # Get column names
+df = pd.DataFrame(data, columns=column_names)  # Convert the data into a Pandas DataFrame
 
 total_workouts = df.shape[0]
 avg_distance = round(df['distance_mi'].mean(), 2)

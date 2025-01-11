@@ -7,24 +7,25 @@ import re
 import toml
 
 # Function to setup connectivity
-def get_db_connection():
-    with open("../.streamlit/secrets.toml", "r") as f:
-        dbconfig = toml.load(f)
-        dbconfig = dbconfig['connections']['mysql']
-        # print(dbconfig)
-        dbname = dbconfig["database"]
-        connection = pymysql.connect(
-                host=dbconfig["host"],
-                port=dbconfig["port"],
-                db=dbconfig["database"],
-                user=dbconfig["username"],
-                password=dbconfig["password"],
-                cursorclass=pymysql.cursors.DictCursor
-        )
+def get_db_connection(dbconfig=None):
+    if dbconfig is None:
+        with open("../.streamlit/secrets.toml", "r") as f:
+            dbconfig = toml.load(f)
+            dbconfig = dbconfig['connections']['mysql']
+            print(dbconfig)
+
+    connection = pymysql.connect(
+            host=dbconfig["host"],
+            port=dbconfig["port"],
+            user=dbconfig["username"],
+            password=dbconfig["password"],
+            database=dbconfig["database"],
+            cursorclass=pymysql.cursors.DictCursor
+    )
     return connection
 
 
-def insert_data(df):
+def insert_data(df, dbconfig=None):
     """
     Insert dataframe rows into cursor's database table
     """
@@ -39,7 +40,7 @@ def insert_data(df):
     # Convert DataFrame to list of tuples
     data = [tuple(x) for x in df.replace({np.nan: None}).values]
     
-    connection = get_db_connection()
+    connection = get_db_connection(dbconfig=dbconfig)
     with connection.cursor() as cursor:
         try:
             cursor.executemany(sql, data)
@@ -164,13 +165,39 @@ def clean_data(df):
     return df
 
 
-def load_data(query="SELECT * FROM workout_summary"):
-    cursor = get_db_connection()
-    cursor.execute(query)
-    data = cursor.fetchall()  # Get all rows of the result
-    cursor.close()
-    column_names = [i[0] for i in cursor.description]  # Get column names
-    return pd.DataFrame(data, columns=column_names)  # Convert the data into a Pandas DataFrame
+# def load_data(query="SELECT * FROM workout_summary"):
+#     cursor = get_db_connection()
+#     cursor.execute(query)
+#     data = cursor.fetchall()  # Get all rows of the result
+#     cursor.close()
+#     column_names = [i[0] for i in cursor.description]  # Get column names
+#     return pd.DataFrame(data, columns=column_names)  # Convert the data into a Pandas DataFrame
+
+
+def execute_query(query, dbconfig=None):
+    """
+    Execute an arbitrary SQL query and return the results.
+
+    Args:
+        query (str): The SQL query to execute.
+        query_params (tuple or dict, optional): Parameters for the query.
+
+    Returns:
+        list: List of rows as dictionaries, or an empty list if no results.
+    """
+    results = []
+
+    try:
+        with get_db_connection(dbconfig=dbconfig) as connection:
+            with connection.cursor() as cursor:
+                # Execute the query with parameters (if any)
+                cursor.execute(query)
+                results = cursor.fetchall()
+
+    except pymysql.MySQLError as e:
+        print(f"Error executing query: {e}")
+
+    return results
 
 
 

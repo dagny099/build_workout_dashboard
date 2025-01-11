@@ -11,7 +11,7 @@ Pre-requisites:
     $ ~/.local/bin/poetry run python init.py     # Initialize the database
 """
 
-from utilities import insert_data, clean_data, enrich_data
+from utilities import execute_query, insert_data, clean_data, enrich_data
 import os
 import toml
 import pandas as pd
@@ -24,7 +24,7 @@ with open("pyproject.toml", "r") as f:
 
 # Get the input file path: for `user2632022_workout_history.csv`
 input_filepath = 'build_workout_dashboard' + os.path.sep + config['tool']['project']['input_filename'] 
-# print(input_filepath)
+
 # Load the CSV file with full workout history
 if os.path.exists(input_filepath):
     print(f'\n-------\nChecking for workout data in this file: {input_filepath}')
@@ -51,29 +51,50 @@ with open(".streamlit/secrets.toml", "r") as f:
     print(f"\nUsing this Databse configuration:")    
     print(dbconfig)    
 
+
 # 2. Connect to the database
-connection = pymysql.connect(
-        host=dbconfig["host"],
-        port=dbconfig["port"],
-        user=dbconfig["username"],
-        password=dbconfig["password"],
-        database = dbconfig["database"]
-)
+# connection = pymysql.connect(
+#         host=dbconfig["host"],
+#         port=dbconfig["port"],
+#         user=dbconfig["username"],
+#         password=dbconfig["password"],
+#         database = dbconfig["database"]
+# )
 
-# 3. Insert new workouts into table
-with connection.cursor() as cursor:
+query = "SELECT workout_id FROM workout_summary"
+response = execute_query(query, dbconfig)  # Check what databases are available for this user
 
-    # Check which workout_ids already exist in the table
-    cursor.execute("SELECT workout_id FROM workout_summary")
-    existing_workout_ids = [row[0] for row in cursor.fetchall()]
+if len(response) == 0:
+    print("No existing workouts in the table")
 
-    # Exclude existing workout_ids from the new data
-    newDf = df[~df['workout_id'].isin(existing_workout_ids)]  
-    print(f"\nExisting workouts in table: {len(existing_workout_ids)} | New workouts to import: {newDf.shape[0]}")
+else:
+    workout_ids = [row['workout_id'] for row in response]
+    newDf = df[~df['workout_id'].isin(workout_ids)]  
+    print(f"\nExisting workouts in table: {len(workout_ids)} | New workouts to import: {newDf.shape[0]}")
 
     # INSERT NEW WORKOUTS IN TABLE
-    rows_affected = insert_data(newDf)
+    rows_affected = insert_data(newDf, dbconfig)
     print(f"\nInserted {rows_affected} rows into {tablename}")
+
+
+
+# 3. Insert new workouts into table
+# with connection.cursor() as cursor:
+#     # Check which workout_ids already exist in the table
+#     cursor.execute("SELECT workout_id FROM workout_summary")
+#     existing_workout_ids = [row[0] for row in cursor.fetchall()]
+
+#     # Exclude existing workout_ids from the new data
+#     newDf = df[~df['workout_id'].isin(existing_workout_ids)]  
+#     print(f"\nExisting workouts in table: {len(existing_workout_ids)} | New workouts to import: {newDf.shape[0]}")
+
+#     # INSERT NEW WORKOUTS IN TABLE
+#     rows_affected = insert_data(newDf, dbconfig)
+#     print(f"\nInserted {rows_affected} rows into {tablename}")
+
+
+
+
 
 # 11/22/24 NOT SURE WHY BUT THIS GIVES WRONG VALUE IF THE INSERT_DATA FUNCTION ACTUALLY INSERTED ROWS
 # with connection.cursor() as cursor:
@@ -83,10 +104,10 @@ with connection.cursor() as cursor:
 #     print(f"Total rows in the table after insert: {total_rows}")
 
 # 6. Close the connection
-cursor.close()
-connection.close()
-print("\nMySQL connection is closed")
-print("-------\n")        
+# cursor.close()
+# connection.close()
+# print("\nMySQL connection is closed")
+# print("-------\n")        
         
 
 # # (Optional) Check how many rows are in the table

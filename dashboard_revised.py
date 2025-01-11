@@ -44,14 +44,23 @@ st.markdown(
 # Extract color and font styles from configuration
 colors, font = style_config['colors'], style_config['font']
 
-# 1. Load database configuration (.streamlit/secrets.toml)
-with open(".streamlit/secrets.toml", "r") as f:
-    dbconfig = toml.load(f)
-    dbconfig = dbconfig['connections']['mysql']
-    #del dbconfig['dialect']
-
-# 2. Connect to the database
+# 1. Connect to the database
 connection_type = st.sidebar.selectbox("Select Connection Type", ["Local", "Remote"], index=0)
+
+# 1. Load database configuration (.streamlit/secrets.toml)
+if connection_type == "Local":
+    with open(".streamlit/secrets.toml", "r") as f:
+        dbconfig = toml.load(f)
+        dbconfig = dbconfig['connections']['mysql']
+        #del dbconfig['dialect']
+else:
+    dbconfig = {
+        "host": os.getenv("RDS_ENDPOINT"),
+        "port": 3306,
+        "username": os.getenv("RDS_USER"),
+        "password": os.getenv("RDS_PASSWORD"),
+        "database": 'sweat-mapmyrun-rds',
+    }
 
 # ADD LOGIC HERE TO TOGGLE dbconfig options based on connection_type
 st.sidebar.write("Connecting to MySQL database...")

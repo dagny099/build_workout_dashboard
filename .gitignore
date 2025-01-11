@@ -24,6 +24,7 @@ workouts_timedata*/
 
 # After development, I dont think Ill commit the pyproject.toml
 pyproject.toml
+poetry.lock
 
 # Unit test / coverage reports
 .coverage

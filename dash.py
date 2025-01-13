@@ -59,7 +59,7 @@ else:
         "port": 3306,
         "username": os.getenv("RDS_USER"),
         "password": os.getenv("RDS_PASSWORD"),
-        "database": 'sweat',
+        "database": 'sweat-mapmyrun-rds',
     }
 
 # ADD LOGIC HERE TO TOGGLE dbconfig options based on connection_type
@@ -77,10 +77,6 @@ st.session_state["subset_query"] = subset_query
 
 response = execute_query(subset_query, dbconfig) 
 df =  pd.DataFrame(response)
-
-# Date range selection
-start_date = st.date_input("Start Date", value=df["workout_date"].min())
-end_date = st.date_input("End Date", value=df["workout_date"].max())
 
 
 st.title("Workout Dashboard")
@@ -123,84 +119,64 @@ with query_container:
 # Static Visual Layout - Section 1: Weekly Summary
 st.subheader("Statistics Calculated on Subset of Data")
 
-total_workouts = df.shape[0]
-avg_distance = round(df['distance_mi'].mean(), 2)
-avg_duration = round(df['duration_sec'].mean(), 2)
-avg_calories = round(df['kcal_burned'].mean(), 2)
-fastest_speed = round(df['max_pace'].max(), 2)
+# Date range selection
+start_date = st.date_input("Start Date", value=df["workout_date"].min())
+end_date = st.date_input("End Date", value=df["workout_date"].max())
 
-metrics = [
-    {"label": "Total Workouts", "value": total_workouts, "color": colors["distance"]},
-    {"label": "Avg Distance", "value": f"{avg_distance} km", "color": colors["distance"]},
-    {"label": "Avg Duration", "value": f"{avg_duration} min", "color": colors["duration"]},
-    {"label": "Avg Calories", "value": f"{avg_calories} kcal", "color": colors["calories"]},
-    {"label": "Fastest Speed", "value": f"{fastest_speed} km/h", "color": colors["speed"]},
-]
+# Dropdown menu for aggregation
+aggregation = st.selectbox("Select Aggregation Level", ["Days", "Weeks", "Months", "Years"])
 
-col1, col2, col3 = st.columns(3)  # Three columns in a row
-
-# Display metrics
-with col1:
-    st.markdown('<div class="metric-container">', unsafe_allow_html=True)
-    st.metric(label= metrics[0]['label'], value=metrics[0]['value'], help= "Total number of workouts")
-    # st.metric(label= metrics[1]['label'], value=metrics[1]['value'], help= "Average distance in miles")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with col2:
-    st.markdown('<div class="metric-container">', unsafe_allow_html=True)
-    st.metric(label= metrics[2]['label'], value=metrics[2]['value'], help= "Average duration in seconds")
-    st.metric(label= metrics[3]['label'], value=metrics[3]['value'], help= "Average calories burned")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with col3:
-    st.markdown('<div class="metric-container">', unsafe_allow_html=True)
-    st.metric(label= metrics[4]['label'], value=metrics[4]['value'])
-    st.markdown('</div>', unsafe_allow_html=True)
-
-
-# # Render each metric dynamically
-# for metric in metrics:
-#     st.markdown(
-#         f"""
-#         <div style="display: inline-block; text-align: center; width: 20%; color: {metric['color']}">
-#             <h3 style="font-family: {font['heading']};">{metric['label']}</h3>
-#             <p style="font-family: {font['data_label']}; font-size: 24px;">{metric['value']}</p>
-#         </div>
-#         """,
-#         unsafe_allow_html=True
-#     )
-
-# Section 2: Interactive Trend Chart Placeholder
-st.subheader("Trend Analysis")
-metric_choice = st.selectbox("Select a metric to view trend:", ["Distance", "Duration", "Calories", "Speed"])
-# st.line_chart([1, 2, 3, 4, 5])  # Placeholder line chart data
-
-# Example footer or additional space for future interactivity
-st.markdown("<div style='padding: 20px'></div>", unsafe_allow_html=True)
-df['workout_date'] = pd.to_datetime(df['workout_date'])
-
-# Calculate number of workouts per day (optional, depending on Y-axis choice)
-df['num_workouts'] = df.groupby('workout_date')['workout_id'].transform('count')
-
-# Choose the Y-axis metric (avg_pace or num_workouts)
-y_metric = 'avg_pace'  # Change to 'num_workouts' for count of workouts
-
-# Create the Plotly time series plot
-fig = px.line(
-    df,
-    x="workout_date",
-    y=y_metric,
-    title=f"Time Series of {y_metric.replace('_', ' ').title()}",
-    labels={"workout_date": "Date", y_metric: y_metric.replace('_', ' ').title()},
-    markers=True
+# Dropdown menu for Y-axis metric
+y_axis_metric = st.selectbox(
+    "Select Y-Axis Metric",
+    [
+        "total_workouts",
+        "avg_distance",
+        "avg_duration",
+        "avg_calories",
+        "fastest_speed"
+    ],
+    format_func=lambda x: x.replace("_", " ").title()
 )
 
-# Show the figure
+# Filter data based on the date range
+filtered_df = df[(df["workout_date"] >= pd.to_datetime(start_date)) & (df["workout_date"] <= pd.to_datetime(end_date))]
+
+# Aggregate data based on the selected aggregation
+if aggregation == "Days":
+    filtered_df["time_group"] = filtered_df["workout_date"].dt.date
+elif aggregation == "Weeks":
+    filtered_df["time_group"] = filtered_df["workout_date"].dt.to_period("W").apply(lambda r: r.start_time)
+elif aggregation == "Months":
+    filtered_df["time_group"] = filtered_df["workout_date"].dt.to_period("M").apply(lambda r: r.start_time)
+elif aggregation == "Years":
+    filtered_df["time_group"] = filtered_df["workout_date"].dt.to_period("Y").apply(lambda r: r.start_time)
+
+# Define the y-axis metric
+# Aggregate metrics
+aggregated_df = filtered_df.groupby("time_group").agg(
+    total_workouts=("workout_date", "count"),
+    avg_distance=("distance_mi", "mean"),
+    avg_duration=("duration_sec", "mean"),
+    avg_calories=("kcal_burned", "mean"),
+    fastest_speed=("avg_pace", "min")
+).reset_index()
+
+# Display the aggregated data
+st.write("Filtered and Aggregated Data")
+st.dataframe(aggregated_df)
+
+# Plotly bar chart
+fig = px.bar(
+    aggregated_df,
+    x="time_group",
+    y=y_axis_metric,
+    title=f"Time Series of {y_axis_metric.replace('_', ' ').title()}",
+    labels={
+        "time_group": "Time Group",
+        y_axis_metric: y_axis_metric.replace("_", " ").title()
+    },
+    text_auto=True  # Display values on bars
+)
 st.plotly_chart(fig)
-
-
-# if st.checkbox("Show Charts"):
-#     fig = px.line(df, x='date', y='steps', title="Daily Exercise Steps")
-#     st.plotly_chart(fig)
-
 

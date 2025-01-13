@@ -61,13 +61,13 @@ response = execute_query(query, dbconfig)  # Check what databases are available 
 if len(response) == 0:
     print("No existing workouts in the table")
 
-else:
-    # Use the pk (workout_id) to exclude 
-    workout_ids = [row['workout_id'] for row in response]
-    newDf = df[~df['workout_id'].isin(workout_ids)]  
 
-    # INSERT NEW WORKOUTS IN TABLE
-    rows_affected = insert_data(newDf, dbconfig)
-    
-    print(f"\nExisting workouts in table: {len(workout_ids)} | New workouts to import: {newDf.shape[0]}")
-    print(f"\nInserted {rows_affected} rows into {tablename}")
+# Use the pk (workout_id) to exclude 
+workout_ids = [row['workout_id'] for row in response]
+newDf = df[~df['workout_id'].isin(workout_ids)]  
+
+# INSERT NEW WORKOUTS IN TABLE
+rows_affected = insert_data(newDf, dbconfig)
+
+print(f"\nExisting workouts in table: {len(workout_ids)} | New workouts to import: {newDf.shape[0]}")
+print(f"\nInserted {rows_affected} rows into {tablename}")

@@ -18,6 +18,29 @@ import toml
 import json
 import os
 
+GET_HELP = f"""
+Here's a quick guide to help you get started:
+
+#### 1. Configure your chat settings (OPTIONAL)
+- Click on the gear icon in the top right corner to configure your chat settings.
+- You can choose to show or hide the chat interface.
+
+---
+"""
+
+# ============================================= #
+# Setup session
+st.set_page_config(
+    page_title="Practice SQL!",
+    page_icon="🐇",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+    menu_items={
+        "Get help": "https://www.streamlit.io/", 
+        "Report a bug": "mailto:dagny099@gmail.com", 
+        "About": GET_HELP},
+)
+
 # 0. Load dashboard style configuration from a JSON file
 with open("build_workout_dashboard/style_config.json") as config_file:
     style_config = json.load(config_file)
@@ -64,7 +87,7 @@ else:
 
 # ADD LOGIC HERE TO TOGGLE dbconfig options based on connection_type
 st.sidebar.write("Connecting to MySQL database...")
-st.sidebar.write(dbconfig)
+#st.sidebar.write(dbconfig)
 
 conn = get_db_connection(dbconfig=dbconfig)
 
@@ -79,8 +102,8 @@ response = execute_query(subset_query, dbconfig)
 df =  pd.DataFrame(response)
 
 # Date range selection
-start_date = st.date_input("Start Date", value=df["workout_date"].min())
-end_date = st.date_input("End Date", value=df["workout_date"].max())
+start_date = st.sidebar.date_input("Start Date", value=df["workout_date"].min())
+end_date = st.sidebar.date_input("End Date", value=df["workout_date"].max())
 
 
 st.title("Workout Dashboard")

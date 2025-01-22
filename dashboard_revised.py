@@ -129,13 +129,19 @@ with query_container:
                 with conn.cursor() as cursor:
                     cursor.execute(query)
                     rows = cursor.fetchall()
-
-                    # Display results
+                    st.write("Query executed successfully.")
+                    
+                    # Convert query result to a DataFrame
                     if rows:
-                        for row in rows:
-                            st.write(row)
+                        column_names = [i[0] for i in cursor.description]
+                        rows = pd.DataFrame(rows, columns=column_names)
+
+                        # Display results as a dataframe
+                        st.write(rows)
                     else:
-                        st.write("No results returned.")
+                        st.write("No results to display.")
+
+
             except Exception as e:
                 st.error(f"Error executing query: {e}")
             finally:

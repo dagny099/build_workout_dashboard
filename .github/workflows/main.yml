@@ -1,0 +1,90 @@
+# This file should be placed in .github/workflows/main.yml
+name: SQL Dashboard CI/CD
+
+# This section defines when the workflow should run
+on:
+  # Trigger on push to main branch
+  push:
+    branches: [ main ]
+  # Trigger on pull requests to main branch
+  pull_request:
+    branches: [ main ]
+  # Allow manual triggering from GitHub UI
+  workflow_dispatch:
+
+# Jobs are the main building blocks of your workflow
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Check out your repository code
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      # Step 2: Set up Python environment
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+
+      # Step 3: Install Poetry
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          poetry config virtualenvs.create false
+
+      # Step 4: Install project dependencies
+      - name: Install dependencies
+        run: poetry install
+
+      # Step 5: Run tests with pytest
+      - name: Run tests
+        run: |
+          poetry run pytest tests/ -v --cov=.
+          
+      # Step 6: Upload test coverage reports
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        if: success()
+        with:
+          fail_ci_if_error: true
+
+  # Only run deploy job if tests pass and we're on main branch
+  deploy:
+    name: Deploy to EC2
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      # Step 1: Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1  # Adjust to your region
+
+      # Step 2: Deploy to EC2
+      - name: Deploy to EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          # Create SSH directory and add private key
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          
+          # Deploy application
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ec2-user@$EC2_HOST '
+            cd ~/sql-dashboard
+            git pull
+            poetry install
+            sudo systemctl restart sql-dashboard
+          '

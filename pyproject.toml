@@ -1,13 +1,19 @@
 [tool.poetry]
 name = "build-workout-dashboard"
 version = "0.1.0"
-description = "Project to build a Workout Dashboard with an end-to-end workflow encompassing data ingestion, cleaning, storing, transforming, and managing of that data. Goals: SQL practice, data visualization, insight generation, and more."
+description = "Barb's project to build a Workout Dashboard with an end-to-end workflow encompassing data ingestion, 
+cleaning, 
+storing, transforming, and managing of that data. Goals: SQL practice, data visualization, insight generation, and more."
 authors = ["Barbara Hidalgo <barbs@balex.com>"]
 package-mode = true
 readme = "README.md"
 
 #[tool.poetry.dev-dependencies]
 #IF DEPLOYING ON PROD, THIS IS HOW TO INSTALL: > poetry install --no-dev
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.4"
+pytest-cov = "^6.0.0"
 
 [build-system]
 requires = ["poetry-core"]

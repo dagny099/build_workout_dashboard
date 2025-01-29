@@ -97,7 +97,6 @@ else:
         "password": os.getenv("RDS_PASSWORD"),
         "database": 'sweat',
     }
-
 tmpMsg = st.sidebar.empty()
 tmpMsg.write("Connecting to MySQL database...")
 conn = get_db_connection(dbconfig=dbconfig)  # Connect to the database
